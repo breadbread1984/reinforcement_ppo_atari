@@ -22,6 +22,7 @@ def add_options():
   flags.DEFINE_float('lr', default = 1e-4, help = 'learning rate')
   flags.DEFINE_string('logdir', default = 'logs', help = 'path to log directory')
   flags.DEFINE_integer('epochs', default = 300, help = 'number of epoch')
+  flags.DEFINE_integer('update_ref_n_epochs', default = 4, help = 'update reference model every n epochs')
   flags.DEFINE_integer('episodes', default = 10000, help = 'episodes per epoch')
   flags.DEFINE_integer('max_ep_steps', default = 300, help = 'max episode steps')
   flags.DEFINE_boolean('visualize', default = False, help = 'whether to visualize')
@@ -39,7 +40,9 @@ def main(unused_argv):
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
   env = gym.make(env_id, render_mode = "rgb_array")
+  reference = PPO(action_num = env.action_space.n)
   ppo = PPO(action_num = env.action_space.n)
+  reference.load_state_dict(ppo.state_dict())
   criterion = nn.MSELoss()
   optimizer = Adam(ppo.parameters(), lr = FLAGS.lr)
   scheduler = CosineAnnealingWarmRestarts(optimizer, T_0 = 5, T_mult = 2)
@@ -89,6 +92,8 @@ def main(unused_argv):
       tb_writer.add_scalar('loss', loss, global_steps)
       global_steps += 1
     scheduler.step()
+    if epoch % FLAGS.update_ref_n_epochs == 0:
+      reference.load_state_dict(ppo.state_dict())
     ckpt = {
       'global_steps': global_steps,
       'state_dict': ppo.state_dict(),
