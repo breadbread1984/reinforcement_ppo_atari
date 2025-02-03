@@ -61,8 +61,8 @@ def main(unused_argv):
       states.append(preprocess(obs)) # s_t
       for step in range(FLAGS.max_ep_steps):
         obs = torch.from_numpy(np.expand_dims(preprocess(obs), axis = 0).astype(np.float32)).to(next(ppo.parameters()).device) # obs.shape = (1, 3, 224, 224)
-        action, logprob = ppo.act(obs) # action.shape = (1,4), logprob.shape = (1,1)
-        _, ref_logprob = reference.act(obs) # ref_logprob.shape = (1,1)
+        _, logprob = ppo.act(obs) # action.shape = (1,4), logprob.shape = (1,1)
+        action, ref_logprob = reference.act(obs) # ref_logprob.shape = (1,1)
         obs, reward, done, truc, info = env.step(action.detach().numpy().item()) # r_t
         logprobs.append(logprob)
         ref_logprobs.append(ref_logprob)
