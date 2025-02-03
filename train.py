@@ -65,7 +65,7 @@ def main(unused_argv):
         action, ref_logprob = reference.act(obs) # ref_logprob.shape = (1,1)
         obs, reward, done, truc, info = env.step(action.detach().numpy().item()) # r_t
         logprobs.append(logprob)
-        ref_logprobs.append(ref_logprob)
+        ref_logprobs.append(ref_logprob.detach())
         rewards.append(reward)
         dones.append(done)
         if FLAGS.visualize:
