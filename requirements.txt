@@ -1,0 +1,8 @@
+absl-py
+torch
+gymnasium
+ale_py
+tqdm
+numpy
+opencv-python
+transformers
