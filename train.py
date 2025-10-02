@@ -22,12 +22,10 @@ def add_options():
   flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')
   flags.DEFINE_float('lr', default = 1e-4, help = 'learning rate')
   flags.DEFINE_string('logdir', default = 'logs', help = 'path to log directory')
-  flags.DEFINE_integer('n_traj', default = 1000, help = 'number of trajectories collected for one time')
+  flags.DEFINE_integer('n_traj', default = 1000, help = 'number of trajectories collected for one epoch')
   flags.DEFINE_integer('traj_length', default = 256, help = 'maximum length of a trajectory')
   flags.DEFINE_integer('epochs', default = 300, help = 'number of epoch')
   flags.DEFINE_integer('update_ref_n_epochs', default = 4, help = 'update reference model every n epochs')
-  flags.DEFINE_integer('max_ep_steps', default = 300, help = 'max episode steps')
-  flags.DEFINE_boolean('visualize', default = False, help = 'whether to visualize')
   flags.DEFINE_float('gamma', default = 0.95, help = 'gamma value')
   flags.DEFINE_float('lam', default = 0.95, help = 'lambda')
 
