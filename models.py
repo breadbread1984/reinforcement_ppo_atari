@@ -36,7 +36,7 @@ class PolicyNet(nn.Module):
     weights = self.pred_head(hidden) # weights.shape = (b, action_num)
     actions = torch.multinomial(weights, sample_num) # action.shape = (b, sample_num)
     logprob = torch.log(torch.gather(weights, dim = -1, index = actions)) # logprob.shape = (b, sample_num)
-    return action, logprob, new_past_key_values
+    return actions, logprob, new_past_key_values
   def get_probs(self, x, actions, past_key_values = None):
     encoding = self.encoding(x)
     encoding = encoding[:,None,:]
@@ -81,6 +81,7 @@ class PPO(nn.Module):
   def act(self, x, past_key_values = None, sample_num = 1):
     actions, logprob, new_past_key_values = self.policy_net(x, past_key_values = past_key_values, sample_num = sample_num) # action.shape = (batch, 1), logprob.shape = (batch, 1)
     ref_logprob = self.reference_net.get_probs(x, actions, past_key_values = past_key_values)
+    # actions.shape = (b, sample_num) logprob.shape = (b, sample_num), ref_logprob.shape = (b, sample_num)
     return actions, logprob, ref_logprob, new_past_key_values
   def advantages(self, states, rewards, values, dones, gamma = 0.95, lam = 0.95):
     assert states.shape[0] == rewards.shape[0] + 1 == values.shape[0] + 1 == dones.shape[0] + 1
