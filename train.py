@@ -56,7 +56,15 @@ def main(unused_argv):
     scheduler = ckpt['scheduler']
   for epoch in tqdm(range(FLAGS.epochs)):
     # 1) collect trajectories
-    trajs = [{} for _ in range(FLAGS.n_traj)]
+    trajs = [
+      {
+        'state': list(),
+        'logprob': list(),
+        'ref_logprob': list(),
+        'reward': list(),
+        'done': list()
+      } for _ in range(FLAGS.n_traj)
+    ]
     past_key_values = None
     obs, info = envs.reset()
     for ob, traj in zip(obs, trajs):
