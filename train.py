@@ -3,6 +3,7 @@
 from absl import flags, app
 from os.path import exists, join
 import gymnasium as gym
+from gymnasium.vector import SyncVectorEnv
 import ale_py
 from tqdm import tqdm
 import numpy as np
@@ -21,9 +22,10 @@ def add_options():
   flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')
   flags.DEFINE_float('lr', default = 1e-4, help = 'learning rate')
   flags.DEFINE_string('logdir', default = 'logs', help = 'path to log directory')
+  flags.DEFINE_integer('n_traj', default = 1000, help = 'number of trajectories collected for one time')
+  flags.DEFINE_integer('traj_length', default = 256, help = 'maximum length of a trajectory')
   flags.DEFINE_integer('epochs', default = 300, help = 'number of epoch')
   flags.DEFINE_integer('update_ref_n_epochs', default = 4, help = 'update reference model every n epochs')
-  flags.DEFINE_integer('episodes', default = 10000, help = 'episodes per epoch')
   flags.DEFINE_integer('max_ep_steps', default = 300, help = 'max episode steps')
   flags.DEFINE_boolean('visualize', default = False, help = 'whether to visualize')
   flags.DEFINE_float('gamma', default = 0.95, help = 'gamma value')
@@ -39,9 +41,9 @@ def main(unused_argv):
   env_id = {
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
-  env = gym.make(env_id, render_mode = "rgb_array")
-  reference = PPO(action_num = env.action_space.n)
-  ppo = PPO(action_num = env.action_space.n)
+  envs = SyncVectorEnv([lambda: gym.make(env_id, render_mode = "rgb_array") for _ in range(FLAGS.n_traj)])
+  reference = PPO(action_num = envs.action_space.n)
+  ppo = PPO(action_num = envs.action_space.n, is_train = True)
   reference.load_state_dict(ppo.state_dict())
   criterion = nn.MSELoss()
   optimizer = Adam(ppo.parameters(), lr = FLAGS.lr)
@@ -55,39 +57,34 @@ def main(unused_argv):
     optimizer.load_state_dict(ckpt['optimizer'])
     scheduler = ckpt['scheduler']
   for epoch in tqdm(range(FLAGS.epochs)):
-    for episode in tqdm(range(FLAGS.episodes), leave = False):
-      states, logprobs, ref_logprobs, rewards, dones = list(), list(), list(), list(), list()
-      obs, info = env.reset()
-      states.append(preprocess(obs)) # s_t
-      for step in range(FLAGS.max_ep_steps):
-        obs = torch.from_numpy(np.expand_dims(preprocess(obs), axis = 0).astype(np.float32)).to(next(ppo.parameters()).device) # obs.shape = (1, 3, 224, 224)
-        _, logprob = ppo.act(obs) # action.shape = (1,4), logprob.shape = (1,1)
-        action, ref_logprob = reference.act(obs) # ref_logprob.shape = (1,1)
-        obs, reward, done, truc, info = env.step(action.detach().numpy().item()) # r_t
-        logprobs.append(logprob)
-        ref_logprobs.append(ref_logprob.detach())
-        rewards.append(reward)
-        dones.append(done)
-        if FLAGS.visualize:
-          image = env.reader()[:,:,::-1]
-          cv2.imshow("", image)
-          cv2.waitKey(1)
-          print(reward)
-        if done or step == FLAGS.max_ep_steps - 1:
-          # episodes are truncated to at most 300 steps
-          assert len(states) == len(rewards) == len(dones)
-          states.append(preprocess(obs)) # save s_t+1
-          states = torch.from_numpy(np.stack(states).astype(np.float32)).to(next(ppo.parameters()).device) # states.shape = (len + 1, 3, 224, 224)
-          logprobs = torch.cat(logprobs, dim = 0).to(next(ppo.parameters()).device) # logprobs.shape = (len)
-          ref_logprobs = torch.cat(ref_logprobs, dim = 0).to(next(ppo.parameters()).device) # ref_logprobs.shape = (len)
-          rewards = torch.from_numpy(np.array(rewards).astype(np.float32)).to(next(ppo.parameters()).device) # rewards.shape = (len)
-          dones = torch.from_numpy(np.array(dones).astype(np.float32)).to(next(ppo.parameters()).device) # rewards.shape = (len)
-          true_values = ppo.get_values(states, rewards, dones, gamma = FLAGS.gamma) # true_values.shape = (len)
-          pred_values = ppo.pred_values(states) # pred_values.shape = (len)
-          advantages = ppo.advantages(states, rewards, true_values, dones, FLAGS.gamma, FLAGS.lam) # advantages.shape = (len)
-          break
-        states.append(preprocess(obs))
-      # update policy and value networks
+    # 1) collect trajectories
+    trajs = [{} for _ in range(FLAGS.n_traj)]
+    past_key_values = None
+    obs, info = envs.reset()
+    for ob, traj in zip(obs, trajs):
+      traj['state'].append(preprocess(ob))
+    for step in range(FLAGS.traj_length):
+      obs = torch.from_numpy(np.stack([preprocess(ob) for ob in obs], axis = 0).astype(np.float32)).to(next(ppo.parameters()).device) # obs.shape = (n_traj, 3, 224, 224)
+      actions, logprobs, ref_logprobs, past_key_values = ppo.act(obs, past_key_values = past_key_values) # actions.shape = (n_traj, 1), logprob.shape = (n_traj, 1) ref_logprob.shape = (n_traj, 1)
+      actions = np.squeeze(actions.detach().numpy(), axis = -1)
+      obs, rewards, terminates, truncates, infos = envs.step(actions)
+      # obs.shape = (n_traj, h, w, 3) rewards.shape = (n_traj) terminates.shape = (n_traj) truncates.shape = (n_traj)
+      for ob, reward, logprob, ref_logprob, done, traj in zip(obs, rewards, logprobs, ref_logprobs, terminates, trajs):
+        traj['state'].append(preprocess(ob)) # np.ndarray shape = (traj_length + 1, 3, h, w)
+        traj['logprob'].append(logprob) # torch.Tensor shape = (traj_length, 1, 1)
+        traj['ref_logprob'].append(ref_logprob) # torch.Tensor shape = (traj_length, 1, 1)
+        traj['reward'].append(reward) # np.ndarray shape = (traj_length)
+        traj['done'].append(done) # np.ndarray shape = (traj_length)
+    # 2) train with trajectories
+    for traj in trajs:
+      states = torch.from_numpy(np.stack(traj['state']).astype(np.float32)).to(next(ppo.parameters()).device) # states.shape = (traj_length + 1, 3, 224, 224)
+      logprobs = torch.squeeze(torch.cat(traj['logprob'], dim = 0), dim = -1).to(next(ppo.parameters()).device) # logprobs.shape = (traj_length,)
+      ref_logprobs = torch.squeeze(torch.cat(traj['ref_logprob'], dim = 0), dim = -1).to(next(ppo.parameters()).device) # ref_logprobs.shape = (traj_length)
+      rewards = torch.from_numpy(np.array(traj['reward']).astype(np.float32)).to(next(ppo.parameters()).device) # rewards.shape = (traj_length)
+      dones = torch.from_numpy(np.array(traj['done']).astype(np.float32)).to(next(ppo.parameters()).device) # dones.shape = (traj_length)
+      true_values = ppo.get_values(states, rewards, dones, gamma = FLAGS.gamma) # true_values.shape = (traj_length)
+      pred_values = ppo.pred_values(states)
+      advantages = ppo.advantages(states, rewards, true_values, dones, FLAGS.gamma, FLAGS.lam) # advantages.shape = (traj_length)
       optimizer.zero_grad()
       loss = -torch.mean(logprobs / ref_logprobs * advantages) + 0.5 * criterion(pred_values, true_values)
       loss.backward()
@@ -96,7 +93,7 @@ def main(unused_argv):
       global_steps += 1
     scheduler.step()
     if epoch % FLAGS.update_ref_n_epochs == 0:
-      reference.load_state_dict(ppo.state_dict())
+      ppo.update_ref()
     ckpt = {
       'global_steps': global_steps,
       'state_dict': ppo.state_dict(),
@@ -104,7 +101,7 @@ def main(unused_argv):
       'scheduler': scheduler
     }
     torch.save(ckpt, FLAGS.ckpt)
-  env.close()
+  envs.close()
 
 if __name__ == "__main__":
   add_options()
