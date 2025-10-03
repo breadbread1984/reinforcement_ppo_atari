@@ -14,6 +14,7 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from torch.utils.tensorboard import SummaryWriter
 from models import PPO
+from utils import move_dynamic_cache_to_device
 
 FLAGS = flags.FLAGS
 
@@ -73,7 +74,7 @@ def main(unused_argv):
       for step in range(FLAGS.traj_length):
         obs = torch.from_numpy(np.stack([preprocess(ob) for ob in obs], axis = 0).astype(np.float32)).to(next(ppo.parameters()).device) # obs.shape = (n_traj, 3, 224, 224)
         actions, logprobs, ref_logprobs, past_key_values = ppo.act(obs, past_key_values = past_key_values) # actions.shape = (n_traj, 1), logprob.shape = (n_traj, 1) ref_logprob.shape = (n_traj, 1)
-        actions, logprobs, ref_logprobs, past_key_values = actions.cpu(), logprobs.cpu(), ref_logprobs.cpu(), past_key_values.cpu()
+        actions, logprobs, ref_logprobs, past_key_values = actions.cpu(), logprobs.cpu(), ref_logprobs.cpu(), move_dynamic_cache_to_device(past_key_values, 'cpu')
         actions = np.squeeze(actions.numpy(), axis = -1)
         obs, rewards, terminates, truncates, infos = envs.step(actions)
         # obs.shape = (n_traj, h, w, 3) rewards.shape = (n_traj) terminates.shape = (n_traj) truncates.shape = (n_traj)
