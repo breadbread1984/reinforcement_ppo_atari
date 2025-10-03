@@ -40,7 +40,7 @@ class PolicyNet(nn.Module):
   def get_probs(self, x, actions, past_key_values = None):
     encoding = self.encoding(x)
     encoding = encoding[:,None,:]
-    results = self.model(inputs_embeds = encoding, past_key_values = past_key_values, use_cache = True)
+    results = self.model(inputs_embeds = encoding, past_key_values = past_key_values, use_cache = True, output_hidden_states = True, return_dict_in_generate = True)
     hidden = results.hidden_states[-1]
     hidden = torch.squeeze(hidden, dim = 1)
     weights = self.pred_head(hidden)
