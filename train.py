@@ -28,6 +28,7 @@ def add_options():
   flags.DEFINE_integer('update_ref_n_epochs', default = 4, help = 'update reference model every n epochs')
   flags.DEFINE_float('gamma', default = 0.95, help = 'gamma value')
   flags.DEFINE_float('lam', default = 0.95, help = 'lambda')
+  flags.DEFINE_enum('device', default = 'cuda', enum_values = {'cpu', 'cuda'}, help = 'device to use')
 
 def preprocess(img):
   img = cv2.resize(img, (224, 224))
@@ -40,8 +41,8 @@ def main(unused_argv):
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
   envs = SyncVectorEnv([lambda: gym.make(env_id, render_mode = "rgb_array") for _ in range(FLAGS.n_traj)])
-  ppo = PPO(action_num = envs.single_action_space.n, is_train = True)
-  criterion = nn.MSELoss()
+  ppo = PPO(action_num = envs.single_action_space.n, is_train = True).to(FLAGS.device)
+  criterion = nn.MSELoss().to(FLAGS.device)
   optimizer = Adam(ppo.parameters(), lr = FLAGS.lr)
   scheduler = CosineAnnealingWarmRestarts(optimizer, T_0 = 5, T_mult = 2)
   tb_writer = SummaryWriter(log_dir = FLAGS.logdir)
