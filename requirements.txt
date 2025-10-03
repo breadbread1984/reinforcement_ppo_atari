@@ -6,3 +6,4 @@ tqdm
 numpy
 opencv-python
 transformers
+tensorboard
