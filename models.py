@@ -74,10 +74,10 @@ class PPO(nn.Module):
     super(PPO, self).__init__()
     self.is_train = is_train
     if self.is_train:
-      self.reference_net = PolicyNet(action_num, hidden_dim)
+      self.reference_net = PolicyNet(action_num)
       for param in self.reference_net.parameters():
         param.requires_grad = False
-    self.policy_net = PolicyNet(action_num, hidden_dim)
+    self.policy_net = PolicyNet(action_num)
     self.value_net = ValueNet(hidden_dim)
     self.dist = torch.distributions.Normal
     # synchronize policy net with reference net
