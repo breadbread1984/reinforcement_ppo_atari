@@ -88,8 +88,8 @@ class PPO(nn.Module):
       with torch.no_grad():
         ref_logprob = self.reference_net.get_probs(x, actions, past_key_values = past_key_values)
     # actions.shape = (b, sample_num) logprob.shape = (b, sample_num), ref_logprob.shape = (b, sample_num)
-    return actions, logprob, ref_logprob.detach(), new_past_key_values if self.is_train else \
-           actions, logprob, new_past_key_values
+    return (actions, logprob, ref_logprob.detach(), new_past_key_values) if self.is_train else \
+           (actions, logprob, new_past_key_values)
   def advantages(self, states, rewards, values, dones, gamma = 0.95, lam = 0.95):
     assert states.shape[0] == rewards.shape[0] + 1 == values.shape[0] + 1 == dones.shape[0] + 1
     T = rewards.shape[0]
