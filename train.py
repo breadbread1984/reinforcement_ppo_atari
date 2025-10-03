@@ -64,7 +64,7 @@ def main(unused_argv):
           'ref_logprob': list(),
           'reward': list(),
           'done': list()
-        } for _ in range(FLAGS.n_traj)
+        } for _ in range(FLAGS.batch)
       ]
       past_key_values = None
       obs, info = envs.reset()
