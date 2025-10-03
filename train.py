@@ -41,7 +41,7 @@ def main(unused_argv):
   }[FLAGS.game]
   envs = SyncVectorEnv([lambda: gym.make(env_id, render_mode = "rgb_array") for _ in range(FLAGS.n_traj)])
   reference = PPO(action_num = envs.single_action_space.n)
-  ppo = PPO(action_num = envs.action_space.n, is_train = True)
+  ppo = PPO(action_num = envs.single_action_space.n, is_train = True)
   reference.load_state_dict(ppo.state_dict())
   criterion = nn.MSELoss()
   optimizer = Adam(ppo.parameters(), lr = FLAGS.lr)
