@@ -44,7 +44,7 @@ class PolicyNet(nn.Module):
     hidden = results.hidden_states[-1]
     hidden = torch.squeeze(hidden, dim = 1)
     weights = self.pred_head(hidden)
-    logprob = torch.log(torch.gather(weights, dim = -1, index = action))
+    logprob = torch.log(torch.gather(weights, dim = -1, index = actions))
     return logprob
 
 class ValueNet(nn.Module):
