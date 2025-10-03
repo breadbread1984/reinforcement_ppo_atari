@@ -41,7 +41,7 @@ class PolicyNet(nn.Module):
     encoding = self.encoding(x)
     encoding = encoding[:,None,:]
     results = self.model(inputs_embeds = encoding, past_key_values = past_key_values, use_cache = True)
-    hidden = results.last_hidden_state
+    hidden = results.hidden_states[-1]
     hidden = torch.squeeze(hidden, dim = 1)
     weights = self.pred_head(hidden)
     logprob = torch.log(torch.gather(weights, dim = -1, index = action))
