@@ -40,7 +40,7 @@ def main(unused_argv):
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
   envs = SyncVectorEnv([lambda: gym.make(env_id, render_mode = "rgb_array") for _ in range(FLAGS.n_traj)])
-  reference = PPO(action_num = envs.action_space.n)
+  reference = PPO(action_num = envs.single_action_space.n)
   ppo = PPO(action_num = envs.action_space.n, is_train = True)
   reference.load_state_dict(ppo.state_dict())
   criterion = nn.MSELoss()
