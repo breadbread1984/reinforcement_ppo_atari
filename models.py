@@ -19,7 +19,7 @@ class PolicyNet(nn.Module):
       nn.GELU(),
       nn.Conv2d(8, 8, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 14, 14)
       nn.Flatten(), # (b, h * 14 * 14)
-      nn.Linear(8, config.hidden_size) # (b, config.hidden_size)
+      nn.Linear(8*14*14, config.hidden_size) # (b, config.hidden_size)
     )
     self.model = Qwen3ForCausalLM(config)
     self.pred_head = nn.Sequential(
