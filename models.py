@@ -29,7 +29,7 @@ class PolicyNet(nn.Module):
   def forward(self, x, past_key_values = None, sample_num = 1):
     encoding = self.encoding(x) # encoding.shape = (b, hidden_size)
     encoding = encoding[:,None,:] # encoding.shape = (b, 1, hidden_size)
-    results = self.model(inputs_embeds = encoding, past_key_values = past_key_values, use_cache = True)
+    results = self.model(inputs_embeds = encoding, past_key_values = past_key_values, use_cache = True, output_hidden_states = True, return_dict_in_generate = True)
     hidden = results.hidden_states # last_hidden_state.shape = (b, 1, hidden_size)
     new_past_key_values = results.past_key_values
     hidden = torch.squeeze(hidden, dim = 1) # hidden.shape = (b, hidden_size)
