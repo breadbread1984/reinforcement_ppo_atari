@@ -72,17 +72,24 @@ class ValueNet(nn.Module):
 class PPO(nn.Module):
   def __init__(self, action_num, hidden_dim = 8, is_train = False):
     super(PPO, self).__init__()
-    if is_train: self.reference_net = PolicyNet(action_num, hidden_dim)
+    self.is_train = is_train
+    if self.is_train:
+      self.reference_net = PolicyNet(action_num, hidden_dim)
+      for param in self.reference_net.parameters():
+        param.requires_grad = False
     self.policy_net = PolicyNet(action_num, hidden_dim)
     self.value_net = ValueNet(hidden_dim)
     self.dist = torch.distributions.Normal
     # synchronize policy net with reference net
-    if is_train: self.update_ref()
+    if self.is_train: self.update_ref()
   def act(self, x, past_key_values = None, sample_num = 1):
     actions, logprob, new_past_key_values = self.policy_net(x, past_key_values = past_key_values, sample_num = sample_num) # action.shape = (batch, 1), logprob.shape = (batch, 1)
-    ref_logprob = self.reference_net.get_probs(x, actions, past_key_values = past_key_values)
+    if self.is_train:
+      with torch.no_grad():
+        ref_logprob = self.reference_net.get_probs(x, actions, past_key_values = past_key_values)
     # actions.shape = (b, sample_num) logprob.shape = (b, sample_num), ref_logprob.shape = (b, sample_num)
-    return actions, logprob, ref_logprob, new_past_key_values
+    return actions, logprob, ref_logprob, new_past_key_values if self.is_train else \
+           actions, logprob, new_past_key_values
   def advantages(self, states, rewards, values, dones, gamma = 0.95, lam = 0.95):
     assert states.shape[0] == rewards.shape[0] + 1 == values.shape[0] + 1 == dones.shape[0] + 1
     T = rewards.shape[0]
@@ -100,7 +107,7 @@ class PPO(nn.Module):
                                gamma * lam * advantages[t + 1] if t != T - 1 else \
                                0)
     assert advantages.shape[0] == rewards.shape[0]
-    return advantages
+    return advantages.detach()
   def get_values(self, states, rewards, dones, gamma):
     # states.shape = (length + 1, 3, h, w) need s_{t+1} to get V(s_{t+1}) to calculate V(s_t) = r_t + r * V(s_{t+1})
     # rewards.shape = (length)
@@ -116,7 +123,11 @@ class PPO(nn.Module):
     for t in reversed(range(rewards.shape[0] - 1)):
       discount_cumsum[t] = rewards[t] + gamma * discount_cumsum[t + 1]
     assert discount_cumsum.shape[0] == rewards.shape[0]
-    return discount_cumsum
+    return discount_cumsum.detach()
+  def pred_values(self, states):
+    values = self.value_net(states[:-1]) # values.shape = (1, 1)
+    values = torch.squeeze(values, dim = -1) # values.shape = (1)
+    return values
   def update_ref(self,):
     state = self.policy_net.state_dict()
     self.reference_net.load_state_dict(state)
