@@ -40,6 +40,7 @@ def preprocess(img):
   return data
 
 def main(unused_argv):
+  torch.autograd.set_detect_anomaly(True)
   gym.register_envs(ale_py)
   env_id = {
     'box': 'ALE/Boxing-v5'
