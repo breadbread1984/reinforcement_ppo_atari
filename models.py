@@ -30,7 +30,7 @@ class PolicyNet(nn.Module):
     encoding = self.encoding(x) # encoding.shape = (b, hidden_size)
     encoding = encoding[:,None,:] # encoding.shape = (b, 1, hidden_size)
     results = self.model(inputs_embeds = encoding, past_key_values = past_key_values, use_cache = True, output_hidden_states = True, return_dict_in_generate = True)
-    hidden = results.hidden_states[-1] # last_hidden_state.shape = (b, 1, hidden_size)
+    hidden = results.last_hidden_state # last_hidden_state.shape = (b, 1, hidden_size)
     new_past_key_values = results.past_key_values
     hidden = torch.squeeze(hidden, dim = 1) # hidden.shape = (b, hidden_size)
     weights = self.pred_head(hidden) # weights.shape = (b, action_num)
@@ -41,7 +41,7 @@ class PolicyNet(nn.Module):
     encoding = self.encoding(x)
     encoding = encoding[:,None,:]
     results = self.model(inputs_embeds = encoding, past_key_values = past_key_values, use_cache = True, output_hidden_states = True, return_dict_in_generate = True)
-    hidden = results.hidden_states[-1]
+    hidden = results.last_hidden_state
     hidden = torch.squeeze(hidden, dim = 1)
     weights = self.pred_head(hidden)
     logprob = torch.log(torch.gather(weights, dim = -1, index = actions))
