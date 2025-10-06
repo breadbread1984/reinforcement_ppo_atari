@@ -14,7 +14,7 @@ from torch import nn
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from torch.utils.tensorboard import SummaryWriter
-from models import PPO
+from models_qwen import PPO
 
 FLAGS = flags.FLAGS
 
@@ -24,8 +24,8 @@ def add_options():
   flags.DEFINE_float('lr', default = 1e-4, help = 'learning rate')
   flags.DEFINE_string('logdir', default = 'logs', help = 'path to log directory')
   flags.DEFINE_integer('stack_length', default = 4, help = 'length of the stack')
-  flags.DEFINE_integer('steps', default = 1000, help = 'number of steps per epoch')
-  flags.DEFINE_integer('batch', default = 32, help = 'number of trajectories collected parallely')
+  flags.DEFINE_integer('steps', default = 10000, help = 'number of steps per epoch')
+  flags.DEFINE_integer('batch', default = 4, help = 'number of trajectories collected parallely')
   flags.DEFINE_integer('traj_length', default = 256, help = 'maximum length of a trajectory')
   flags.DEFINE_integer('epochs', default = 300, help = 'number of epoch')
   flags.DEFINE_integer('update_ref_n_epochs', default = 4, help = 'update reference model every n epochs')
