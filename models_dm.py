@@ -3,7 +3,6 @@
 from os import environ
 import torch
 from torch import nn
-from transformers import AutoConfig, Qwen3ForCausalLM
 
 class PolicyNet(nn.Module):
   def __init__(self, action_num, hidden_dim = 8, stack_length = 4):
