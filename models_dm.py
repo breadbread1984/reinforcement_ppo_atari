@@ -17,10 +17,10 @@ class PolicyNet(nn.Module):
       nn.GELU(),
       nn.Conv2d(hidden_dim, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 14, 14)
       nn.Flatten(), # (b, h * 14 * 14)
-      nn.Linear(hidden_dim * 14 * 14, config.hidden_size) # (b, config.hidden_size)
+      nn.Linear(hidden_dim * 14 * 14, 64) # (b, config.hidden_size)
     )
     self.pred_head = nn.Sequential(
-      nn.Linear(config.hidden_size, action_num),
+      nn.Linear(64, action_num),
       nn.Softmax(dim = -1)
     )
   def forward(self, x, sample_num = 1):
