@@ -6,20 +6,20 @@ from torch import nn
 from transformers import AutoConfig, Qwen3ForCausalLM
 
 class PolicyNet(nn.Module):
-  def __init__(self, action_num):
+  def __init__(self, action_num, hidden_dim = 8):
     super(PolicyNet, self).__init__()
     environ['HUGGINGFACEHUB_API_TOKEN'] = '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'
     config = AutoConfig.from_pretrained('Qwen/Qwen3-0.6B')
     self.encoding = nn.Sequential(
-      nn.Conv2d(4, 8, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 112, 112)
+      nn.Conv2d(4, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 112, 112)
       nn.GELU(),
-      nn.Conv2d(8, 8, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 56, 56)
+      nn.Conv2d(hidden_dim, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 56, 56)
       nn.GELU(),
-      nn.Conv2d(8, 8, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 28, 28)
+      nn.Conv2d(hidden_dim, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 28, 28)
       nn.GELU(),
-      nn.Conv2d(8, 8, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 14, 14)
+      nn.Conv2d(hidden_dim, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 14, 14)
       nn.Flatten(), # (b, h * 14 * 14)
-      nn.Linear(8*14*14, config.hidden_size) # (b, config.hidden_size)
+      nn.Linear(hidden_dim * 14 * 14, config.hidden_size) # (b, config.hidden_size)
     )
     self.model = Qwen3ForCausalLM(config)
     self.pred_head = nn.Sequential(
