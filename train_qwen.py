@@ -4,7 +4,7 @@ from absl import flags, app
 from os.path import exists, join
 import gymnasium as gym
 from gymnasium.vector import SyncVectorEnv
-from gymnasium.wrappers import FrameStack
+from gymnasium.wrappers import frame_stack
 import ale_py
 from tqdm import tqdm
 import numpy as np
@@ -44,7 +44,7 @@ def main(unused_argv):
   env_id = {
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
-  envs = SyncVectorEnv([lambda: FrameStack(gym.make(env_id), num_stack = FLAGS.stack_length) for _ in range(FLAGS.batch)])
+  envs = SyncVectorEnv([lambda: frame_stack(gym.make(env_id), num_stack = FLAGS.stack_length) for _ in range(FLAGS.batch)])
   ppo = PPO(action_num = envs.single_action_space.n, is_train = True).to(FLAGS.device)
   criterion = nn.MSELoss().to(FLAGS.device)
   optimizer = Adam(ppo.parameters(), lr = FLAGS.lr)
