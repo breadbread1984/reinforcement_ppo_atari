@@ -40,7 +40,6 @@ def preprocess(img):
   return data
 
 def main(unused_argv):
-  torch.autograd.set_detect_anomaly(True)
   gym.register_envs(ale_py)
   env_id = {
     'box': 'ALE/Boxing-v5'
@@ -99,7 +98,7 @@ def main(unused_argv):
         advantages = ppo.advantages(states, rewards, true_values, dones, FLAGS.gamma, FLAGS.lam).to(next(ppo.parameters()).device) # advantages.shape = (traj_length)
         optimizer.zero_grad()
         loss = -torch.mean(logprobs / ref_logprobs * advantages) + 0.5 * criterion(pred_values, true_values)
-        loss.backward(retain_graph = True)
+        loss.backward()
         optimizer.step()
         tb_writer.add_scalar('loss', loss, global_steps)
         global_steps += 1
