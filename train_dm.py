@@ -87,6 +87,7 @@ def main(unused_argv):
           traj['reward'].append(reward) # np.ndarray shape = (traj_length)
           traj['done'].append(done) # np.ndarray shape = (traj_length)
       # 2) train with trajectories
+      loss = 0
       for traj in trajs:
         states = torch.from_numpy(np.stack(traj['state']).astype(np.float32)).to(next(ppo.parameters()).device) # states.shape = (traj_length + 1, 3, 224, 224)
         logprobs = torch.squeeze(torch.cat(traj['logprob'], dim = 0), dim = -1).to(next(ppo.parameters()).device) # logprobs.shape = (traj_length,)
@@ -96,12 +97,12 @@ def main(unused_argv):
         true_values = ppo.get_values(states, rewards, dones, gamma = FLAGS.gamma) # true_values.shape = (traj_length)
         pred_values = ppo.pred_values(states)
         advantages = ppo.advantages(states, rewards, true_values, dones, FLAGS.gamma, FLAGS.lam).to(next(ppo.parameters()).device) # advantages.shape = (traj_length)
-        optimizer.zero_grad()
-        loss = -torch.mean(logprobs / ref_logprobs * advantages) + 0.5 * criterion(pred_values, true_values)
-        loss.backward()
-        optimizer.step()
-        tb_writer.add_scalar('loss', loss, global_steps)
-        global_steps += 1
+        loss += -torch.mean(logprobs / ref_logprobs * advantages) + 0.5 * criterion(pred_values, true_values)
+      optimizer.zero_grad()
+      loss.backward()
+      optimizer.step()
+      tb_writer.add_scalar('loss', loss, global_steps)
+      global_steps += 1
     scheduler.step()
     if epoch % FLAGS.update_ref_n_epochs == 0:
       ppo.update_ref()
