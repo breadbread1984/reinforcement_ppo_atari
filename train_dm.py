@@ -98,7 +98,7 @@ def main(unused_argv):
         advantages = ppo.advantages(states, rewards, true_values, dones, FLAGS.gamma, FLAGS.lam).to(next(ppo.parameters()).device) # advantages.shape = (traj_length)
         optimizer.zero_grad()
         loss = -torch.mean(logprobs / ref_logprobs * advantages) + 0.5 * criterion(pred_values, true_values)
-        loss.backward()
+        loss.backward(retain_graph = True)
         optimizer.step()
         tb_writer.add_scalar('loss', loss, global_steps)
         global_steps += 1
