@@ -58,7 +58,8 @@ def main(unused_argv):
     optimizer.load_state_dict(ckpt['optimizer'])
     scheduler = ckpt['scheduler']
   for epoch in tqdm(range(FLAGS.epochs), desc = 'epoch'):
-    for step in tqdm(range(FLAGS.steps), desc = 'step', leave = False) as step_pbar:
+    step_pbar = tqdm(range(FLAGS.steps), desc = 'step', leave = False)
+    for step in step_pbar:
       # 1) collect trajectories
       trajs = [
         {
