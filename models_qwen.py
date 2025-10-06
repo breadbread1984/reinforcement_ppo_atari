@@ -8,7 +8,6 @@ from transformers import AutoConfig, Qwen3ForCausalLM
 class PolicyNet(nn.Module):
   def __init__(self, action_num, hidden_dim = 8, stack_length = 4):
     super(PolicyNet, self).__init__()
-    environ['HUGGINGFACEHUB_API_TOKEN'] = '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'
     config = AutoConfig.from_pretrained('Qwen/Qwen3-0.6B')
     self.encoding = nn.Sequential(
       nn.Conv2d(stack_length, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 112, 112)
