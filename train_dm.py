@@ -95,7 +95,7 @@ def main(unused_argv):
         dones = torch.from_numpy(np.array(traj['done']).astype(np.float32)).to(next(ppo.parameters()).device) # dones.shape = (traj_length)
         true_values = ppo.get_values(states, rewards, dones, gamma = FLAGS.gamma) # true_values.shape = (traj_length)
         pred_values = ppo.pred_values(states)
-        advantages = ppo.advantages(states, rewards, true_values, dones, FLAGS.gamma, FLAGS.lam) # advantages.shape = (traj_length)
+        advantages = ppo.advantages(states, rewards, true_values, dones, FLAGS.gamma, FLAGS.lam).to(next(ppo.parameters()).device) # advantages.shape = (traj_length)
         optimizer.zero_grad()
         loss = -torch.mean(logprobs / ref_logprobs * advantages) + 0.5 * criterion(pred_values, true_values)
         loss.backward()
