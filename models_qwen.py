@@ -85,8 +85,7 @@ class PPO(nn.Module):
   def act(self, x, past_key_values = None, sample_num = 1):
     actions, logprob, new_past_key_values = self.policy_net(x, past_key_values = past_key_values, sample_num = sample_num) # action.shape = (batch, 1), logprob.shape = (batch, 1)
     if self.is_train:
-      with torch.no_grad():
-        ref_logprob = self.reference_net.get_probs(x, actions, past_key_values = past_key_values)
+      ref_logprob = self.reference_net.get_probs(x, actions, past_key_values = past_key_values)
     # actions.shape = (b, sample_num) logprob.shape = (b, sample_num), ref_logprob.shape = (b, sample_num)
     # NOTE: backpropagation is done through logprob
     return (actions.detach(), logprob, ref_logprob.detach(), new_past_key_values) if self.is_train else \
