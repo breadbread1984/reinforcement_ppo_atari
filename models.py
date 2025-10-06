@@ -108,6 +108,7 @@ class PPO(nn.Module):
                                gamma * lam * advantages[t + 1] if t != T - 1 else \
                                0)
     assert advantages.shape[0] == rewards.shape[0]
+    # NOTE: do not propagate through advantages
     return advantages.detach()
   def get_values(self, states, rewards, dones, gamma):
     # states.shape = (length + 1, 3, h, w) need s_{t+1} to get V(s_{t+1}) to calculate V(s_t) = r_t + r * V(s_{t+1})

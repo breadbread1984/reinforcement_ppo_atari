@@ -73,6 +73,7 @@ def main(unused_argv):
       for step in range(FLAGS.traj_length):
         obs = torch.from_numpy(np.stack([preprocess(ob) for ob in obs], axis = 0).astype(np.float32)).to(next(ppo.parameters()).device) # obs.shape = (n_traj, 3, 224, 224)
         actions, logprobs, ref_logprobs, past_key_values = ppo.act(obs, past_key_values = past_key_values) # actions.shape = (n_traj, 1), logprob.shape = (n_traj, 1) ref_logprob.shape = (n_traj, 1)
+        # move to CPU to reduce GPU usage
         actions, logprobs, ref_logprobs = actions.cpu(), logprobs.cpu(), ref_logprobs.cpu()
         actions = np.squeeze(actions.numpy(), axis = -1) # actions.shape = (n_traj)
         obs, rewards, terminates, truncates, infos = envs.step(actions)
