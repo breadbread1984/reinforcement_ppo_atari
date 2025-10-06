@@ -23,6 +23,7 @@ def add_options():
   flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')
   flags.DEFINE_float('lr', default = 1e-4, help = 'learning rate')
   flags.DEFINE_string('logdir', default = 'logs', help = 'path to log directory')
+  flags.DEFINE_integer('stack_length', default = 4, help = 'length of the stack')
   flags.DEFINE_integer('steps', default = 1000, help = 'number of steps per epoch')
   flags.DEFINE_integer('batch', default = 32, help = 'number of trajectories collected parallely')
   flags.DEFINE_integer('traj_length', default = 256, help = 'maximum length of a trajectory')
@@ -43,7 +44,7 @@ def main(unused_argv):
   env_id = {
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
-  envs = SyncVectorEnv([lambda: FrameStack(gym.make(env_id), num_stack = 4) for _ in range(FLAGS.batch)])
+  envs = SyncVectorEnv([lambda: FrameStack(gym.make(env_id), num_stack = FLAGS.stack_length) for _ in range(FLAGS.batch)])
   ppo = PPO(action_num = envs.single_action_space.n, is_train = True).to(FLAGS.device)
   criterion = nn.MSELoss().to(FLAGS.device)
   optimizer = Adam(ppo.parameters(), lr = FLAGS.lr)

@@ -6,12 +6,12 @@ from torch import nn
 from transformers import AutoConfig, Qwen3ForCausalLM
 
 class PolicyNet(nn.Module):
-  def __init__(self, action_num, hidden_dim = 8):
+  def __init__(self, action_num, hidden_dim = 8, stack_length = 4):
     super(PolicyNet, self).__init__()
     environ['HUGGINGFACEHUB_API_TOKEN'] = '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'
     config = AutoConfig.from_pretrained('Qwen/Qwen3-0.6B')
     self.encoding = nn.Sequential(
-      nn.Conv2d(4, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 112, 112)
+      nn.Conv2d(stack_length, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 112, 112)
       nn.GELU(),
       nn.Conv2d(hidden_dim, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 56, 56)
       nn.GELU(),
@@ -48,10 +48,10 @@ class PolicyNet(nn.Module):
     return logprob
 
 class ValueNet(nn.Module):
-  def __init__(self, hidden_dim = 8):
+  def __init__(self, hidden_dim = 8, stack_length = 4):
     super(ValueNet, self).__init__()
     self.valuenet = nn.Sequential(
-      nn.Conv2d(4, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1),
+      nn.Conv2d(stack_length, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1),
       nn.GELU(),
       nn.Conv2d(hidden_dim, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1),
       nn.GELU(),
@@ -70,15 +70,15 @@ class ValueNet(nn.Module):
     return values
 
 class PPO(nn.Module):
-  def __init__(self, action_num, hidden_dim = 8, is_train = False):
+  def __init__(self, action_num, hidden_dim = 8, stack_length = 4, is_train = False):
     super(PPO, self).__init__()
     self.is_train = is_train
     if self.is_train:
       self.reference_net = PolicyNet(action_num)
       for param in self.reference_net.parameters():
         param.requires_grad = False
-    self.policy_net = PolicyNet(action_num)
-    self.value_net = ValueNet(hidden_dim)
+    self.policy_net = PolicyNet(action_num, hidden_dim = hidden_dim, stack_length = stack_length)
+    self.value_net = ValueNet(hidden_dim, hidden_dim = hidden_dim, stack_length = stack_length)
     self.dist = torch.distributions.Normal
     # synchronize policy net with reference net
     if self.is_train: self.update_ref()
