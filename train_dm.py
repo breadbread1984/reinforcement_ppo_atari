@@ -58,7 +58,7 @@ def main(unused_argv):
     optimizer.load_state_dict(ckpt['optimizer'])
     scheduler = ckpt['scheduler']
   for epoch in tqdm(range(FLAGS.epochs), desc = 'epoch'):
-    for step in tqdm(range(FLAGS.steps), desc = 'step', leave = False):
+    for step in tqdm(range(FLAGS.steps), desc = 'step', leave = False) as step_pbar:
       # 1) collect trajectories
       trajs = [
         {
@@ -101,7 +101,8 @@ def main(unused_argv):
       optimizer.zero_grad()
       loss.backward()
       optimizer.step()
-      tb_writer.add_scalar('loss', loss, global_steps)
+      step_pbar.set_postfix(loss = loss.detach().cpu().numpy())
+      tb_writer.add_scalar('loss', loss.detach().cpu().numpy(), global_steps)
       global_steps += 1
     scheduler.step()
     if epoch % FLAGS.update_ref_n_epochs == 0:
