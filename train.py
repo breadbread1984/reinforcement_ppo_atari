@@ -4,6 +4,7 @@ from absl import flags, app
 from os.path import exists, join
 import gymnasium as gym
 from gymnasium.vector import SyncVectorEnv
+from gymnasium.wrappers import FrameStack
 import ale_py
 from tqdm import tqdm
 import numpy as np
@@ -32,6 +33,7 @@ def add_options():
   flags.DEFINE_enum('device', default = 'cuda', enum_values = {'cpu', 'cuda'}, help = 'device to use')
 
 def preprocess(img):
+  # img.shape = (H, W, c=4)
   img = cv2.resize(img, (224, 224))
   data = np.transpose(img, (2,0,1)) # data.shape = (c, h, w)
   return data
@@ -41,7 +43,7 @@ def main(unused_argv):
   env_id = {
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
-  envs = SyncVectorEnv([lambda: gym.make(env_id, render_mode = "rgb_array") for _ in range(FLAGS.batch)])
+  envs = SyncVectorEnv([lambda: FrameStack(gym.make(env_id), num_stack = 4) for _ in range(FLAGS.batch)])
   ppo = PPO(action_num = envs.single_action_space.n, is_train = True).to(FLAGS.device)
   criterion = nn.MSELoss().to(FLAGS.device)
   optimizer = Adam(ppo.parameters(), lr = FLAGS.lr)

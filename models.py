@@ -11,7 +11,7 @@ class PolicyNet(nn.Module):
     environ['HUGGINGFACEHUB_API_TOKEN'] = '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'
     config = AutoConfig.from_pretrained('Qwen/Qwen3-0.6B')
     self.encoding = nn.Sequential(
-      nn.Conv2d(3, 8, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 112, 112)
+      nn.Conv2d(4, 8, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 112, 112)
       nn.GELU(),
       nn.Conv2d(8, 8, kernel_size = (3,3), stride = (2,2), padding = 1), # (b, h = 8, 56, 56)
       nn.GELU(),
@@ -51,7 +51,7 @@ class ValueNet(nn.Module):
   def __init__(self, hidden_dim = 8):
     super(ValueNet, self).__init__()
     self.valuenet = nn.Sequential(
-      nn.Conv2d(3, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1),
+      nn.Conv2d(4, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1),
       nn.GELU(),
       nn.Conv2d(hidden_dim, hidden_dim, kernel_size = (3,3), stride = (2,2), padding = 1),
       nn.GELU(),
