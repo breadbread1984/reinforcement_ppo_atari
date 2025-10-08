@@ -31,7 +31,7 @@ def main(unused_argv):
   env_id = {
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
-  env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
+  env = FrameStackObservation(GrayscaleObservation(gym.make(env_id, render_mode='human')), FLAGS.stack_length)
   ppo = PPO(action_num = env.action_space.n).to(FLAGS.device)
   with torch.serialization.safe_globals([
     torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
