@@ -9,7 +9,6 @@ import ale_py
 from tqdm import tqdm
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 import torch
 from torch import nn
 from models_qwen import PPO
@@ -47,12 +46,8 @@ def main(unused_argv):
   past_key_values = None
   while not done:
     frame = env.render()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    plt.imshow(frame)
-    plt.axis('off')
-    plt.draw()
-    plt.pause(0.05)
-    plt.close()
+    cv2.imshow('display', frame)
+    cv2.waitKey(40)
     obs = torch.from_numpy(np.stack([preprocess(obs)], axis = 0).astype(np.float32)).to(next(ppo.parameters()).device)
     actions, logprobs, past_key_values = ppo.act(obs, past_key_values = past_key_values)
     actions, logprobs = actions.cpu(), logprobs.cpu()
