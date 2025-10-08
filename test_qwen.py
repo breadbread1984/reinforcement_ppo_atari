@@ -34,7 +34,7 @@ def main(unused_argv):
   ppo = PPO(action_num = env.action_space.n).to(FLAGS.device)
   with torch.serialization.safe_globals([
     torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
-    torch.optim.adam.Adam
+    torch.optim.Adam
   ]):
     ckpt = torch.load(FLAGS.ckpt, map_location = torch.device(FLAGS.device), weights_only = True)
   ppo.load_state_dict(ckpt['state_dict'])
