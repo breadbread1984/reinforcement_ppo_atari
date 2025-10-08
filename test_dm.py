@@ -33,7 +33,7 @@ def main(unused_argv):
   env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
   ppo = PPO(action_num = env.action_space.n).to(FLAGS.device)
   ckpt = torch.load(FLAGS.ckpt, map_location = torch.device(FLAGS.device))
-  ppo.load_state_dict(ckpt['state_dict'])
+  ppo.load_state_dict(ckpt['state_dict'], weights_only = True)
   obs, info = env.reset()
   done = False
   while not done:
