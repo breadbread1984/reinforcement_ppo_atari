@@ -36,7 +36,8 @@ def main(unused_argv):
   with torch.serialization.safe_globals([
     torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
     torch.optim.Adam,
-    collections.defaultdict
+    collections.defaultdict,
+    dict
   ]):
     ckpt = torch.load(FLAGS.ckpt, map_location = torch.device(FLAGS.device), weights_only = True)
   ppo.load_state_dict(ckpt['state_dict'])
