@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from absl import flags, app
+import collections
 import gymnasium as gym
 from gymnasium.wrappers import GrayscaleObservation
 from gymnasium.wrappers import FrameStackObservation
@@ -34,7 +35,8 @@ def main(unused_argv):
   ppo = PPO(action_num = env.action_space.n).to(FLAGS.device)
   with torch.serialization.safe_globals([
     torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
-    torch.optim.Adam
+    torch.optim.Adam,
+    collections.defaultdict
   ]):
     ckpt = torch.load(FLAGS.ckpt, map_location = torch.device(FLAGS.device), weights_only = True)
   ppo.load_state_dict(ckpt['state_dict'])
