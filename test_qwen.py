@@ -45,7 +45,9 @@ def main(unused_argv):
   done = False
   past_key_values = None
   while not done:
-    env.render()
+    frame = env.render()
+    cv2.imshow('display', frame)
+    cv2.waitKey(40)
     obs = torch.from_numpy(np.stack([preprocess(obs)], axis = 0).astype(np.float32)).to(next(ppo.parameters()).device)
     actions, logprobs, past_key_values = ppo.act(obs, past_key_values = past_key_values)
     actions, logprobs = actions.cpu(), logprobs.cpu()
