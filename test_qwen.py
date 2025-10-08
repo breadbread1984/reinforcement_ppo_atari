@@ -32,7 +32,7 @@ def main(unused_argv):
   }[FLAGS.game]
   env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
   ppo = PPO(action_num = env.action_space.n).to(FLAGS.device)
-  with torch.serialization.safe_globals([torch.optim.lr_scheduler.CosineAnnealingWarmRestarts])
+  with torch.serialization.safe_globals([torch.optim.lr_scheduler.CosineAnnealingWarmRestarts]):
     ckpt = torch.load(FLAGS.ckpt, map_location = torch.device(FLAGS.device), weights_only = True)
   ppo.load_state_dict(ckpt['state_dict'])
   obs, info = env.reset()
