@@ -40,7 +40,7 @@ def main(unused_argv):
     dict
   ]):
     ckpt = torch.load(FLAGS.ckpt, map_location = torch.device(FLAGS.device), weights_only = True)
-  ppo.load_state_dict(ckpt['state_dict'])
+  ppo.load_state_dict(ckpt['state_dict'], strict = False)
   obs, info = env.reset()
   done = False
   past_key_values = None
