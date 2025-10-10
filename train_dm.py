@@ -2,6 +2,7 @@
 
 from absl import flags, app
 from os.path import exists, join
+import collections
 import gymnasium as gym
 from gymnasium.vector import SyncVectorEnv
 from gymnasium.wrappers import GrayscaleObservation
@@ -52,7 +53,13 @@ def main(unused_argv):
   tb_writer = SummaryWriter(log_dir = FLAGS.logdir)
   global_steps = 0
   if exists(FLAGS.ckpt):
-    ckpt = torch.load(FLAGS.ckpt)
+    with torch.serialization.safe_globals([
+      torch.optim.lr_scheduler.CosineAnnealingWarmRestarts,
+      torch.optim.Adam,
+      collections.defaultdict,
+      dict
+    ]):
+      ckpt = torch.load(FLAGS.ckpt)
     global_steps = ckpt['global_steps']
     ppo.load_state_dict(ckpt['state_dict'])
     optimizer.load_state_dict(ckpt['optimizer'])
