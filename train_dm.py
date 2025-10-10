@@ -98,6 +98,7 @@ def main(unused_argv):
         true_values = ppo.get_values(states, rewards, dones, gamma = FLAGS.gamma) # true_values.shape = (traj_length)
         pred_values = ppo.pred_values(states)
         advantages = ppo.advantages(states, rewards, true_values, dones, FLAGS.gamma, FLAGS.lam).to(next(ppo.parameters()).device) # advantages.shape = (traj_length)
+        # NOTE: clamp ratio is crucial important, because ratio introduced by TRPO is not numerical stable
         ratio = logprobs / ref_logprobs
         surr1 = ratio * advantages
         surr2 = torch.clamp(ratio, 1.0 - 0.2, 1.0 + 0.2) * advantages
