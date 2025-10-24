@@ -9,7 +9,6 @@ import ale_py
 from tqdm import tqdm
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 import torch
 from torch import nn
 from models_dm import PPO
