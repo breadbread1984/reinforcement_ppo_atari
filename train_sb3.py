@@ -7,7 +7,7 @@ from gymnasium.wrappers import GrayscaleObservation
 from gymnasium.wrappers import FrameStackObservation
 import ale_py
 import torch
-from stable_baselnes3 import PPO
+from stable_baselines3 import PPO
 from models_sb3 import CustomActorCriticPolicy
 
 FLAGS = flags.FLAGS
