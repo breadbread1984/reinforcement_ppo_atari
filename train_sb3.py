@@ -22,7 +22,7 @@ def main(unused_argv):
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
   env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
-  model = PPO(CustomActorCriticPolicy, env)
+  model = PPO(CustomActorCriticPolicy, env, verbose = 1)
   model.learn(FLAGS.steps)
   torch.save(model.state_dict(), FLAGS.ckpt)
 
