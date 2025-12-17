@@ -26,7 +26,7 @@ def main(unused_argv):
   env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
   model = PPO(CustomActorCriticPolicy, env, verbose = 1)
   model.learn(FLAGS.steps)
-  torch.save(model.state_dict(), FLAGS.ckpt)
+  torch.save(model.policy.state_dict(), FLAGS.ckpt)
 
 if __name__ == "__main__":
   add_options()
