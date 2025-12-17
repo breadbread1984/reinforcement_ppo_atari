@@ -14,7 +14,8 @@ FLAGS = flags.FLAGS
 
 def add_options():
   flags.DEFINE_string('ckpt', default = 'ckpt.pth', help = 'path to checkpoint')
-  flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')  flags.DEFINE_integer("steps", default = 5000, help = 'steps for training')
+  flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')
+  flags.DEFINE_integer("steps", default = 5000, help = 'steps for training')
 
 def main(unused_argv):
   gym.register_envs(ale_py)
