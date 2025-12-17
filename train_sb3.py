@@ -13,7 +13,7 @@ from models_sb3 import CustomActorCriticPolicy
 FLAGS = flags.FLAGS
 
 def add_options():
-  flags.DEFINE_string('ckpt', default = 'ckpt.pth', help = 'path to checkpoint')
+  flags.DEFINE_string('ckpt', default = 'ckpt.zip', help = 'path to checkpoint')
   flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')
   flags.DEFINE_integer("steps", default = 5000, help = 'steps for training')
   flags.DEFINE_integer('stack_length', default = 4, help = 'length of the stack')
@@ -26,7 +26,8 @@ def main(unused_argv):
   env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
   model = PPO(CustomActorCriticPolicy, env, verbose = 1)
   model.learn(FLAGS.steps)
-  torch.save(model.policy.state_dict(), FLAGS.ckpt)
+  model.save(FLAGS.ckpt)
+  #torch.save(model.policy.state_dict(), FLAGS.ckpt)
 
 if __name__ == "__main__":
   add_options()
