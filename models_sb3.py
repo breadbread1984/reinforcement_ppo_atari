@@ -18,7 +18,11 @@ class CustomNetwork(nn.Module):
       nn.ReLU()
     )
   def forward(self, features: torch.Tensor):
-    return self.policy_net(features), self.value_net(features)
+    return self.forward_actor(features), self.forward_critic(features)
+  def forward_actor(self, features: torch.Tensor):
+    return self.policy_net(features)
+  def forward_critic(self, features: torch.Tensor):
+    return self.value_net(features)
 
 class CustomActorCriticPolicy(ActorCriticPolicy):
   def _build_mlp_extractor(self) -> None:
