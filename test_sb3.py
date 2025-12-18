@@ -32,7 +32,7 @@ def main(unused_argv):
     obs, reward, terminated, truncated = env.step(action)
     img = env.render()[:,:,::-1]
     cv2.imshow(FLAGS.game, img)
-    cv2.waitKey(40)
+    cv2.waitKey(100)
   env.close()
 
 if __name__ == "__main__":
