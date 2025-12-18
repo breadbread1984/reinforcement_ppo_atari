@@ -14,7 +14,8 @@ from models_sb3 import CustomActorCriticPolicy
 FLAGS = flags.FLAGS
 
 def add_options():
-  flags.DEFINE_string('ckpt', default = 'ckpt.zip', help = 'path to checkpoint')
+  flags.DEFINE_string('save_ckpt', default = 'ckpt.zip', help = 'path to output checkpoint')
+  flags.DEFINE_string('load_ckpt', default = None, help = 'path to checkpoint resumed')
   flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')
   flags.DEFINE_integer("steps", default = 1000000, help = 'steps for training')
   flags.DEFINE_integer("save_freq", default = 1000, help = 'save frequency')
@@ -27,7 +28,11 @@ def main(unused_argv):
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
   env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
-  model = PPO(CustomActorCriticPolicy, env, verbose = 1)
+  if FLAGS.load_ckpt is None:
+    model = PPO(CustomActorCriticPolicy, env, verbose = 1)
+  else:
+    model = PPO.load(FLAGS.load_ckpt)
+    model.set_env(env)
   checkpoint_callback = CheckpointCallback(
     save_freq = FLAGS.save_freq,
     save_path = FLAGS.save_path,
@@ -36,8 +41,8 @@ def main(unused_argv):
     save_vecnormalize = True,
   )
   model.learn(total_timesteps = FLAGS.steps, callback = checkpoint_callback)
-  model.save(FLAGS.ckpt)
-  #torch.save(model.policy.state_dict(), FLAGS.ckpt)
+  model.save(FLAGS.save_ckpt)
+  #torch.save(model.policy.state_dict(), FLAGS.save_ckpt)
 
 if __name__ == "__main__":
   add_options()
