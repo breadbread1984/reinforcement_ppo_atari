@@ -8,6 +8,7 @@ from gymnasium.wrappers import FrameStackObservation
 import ale_py
 import torch
 from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import CheckpointCallback
 from models_sb3 import CustomActorCriticPolicy
 
 FLAGS = flags.FLAGS
@@ -16,6 +17,8 @@ def add_options():
   flags.DEFINE_string('ckpt', default = 'ckpt.zip', help = 'path to checkpoint')
   flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')
   flags.DEFINE_integer("steps", default = 1000000, help = 'steps for training')
+  flags.DEFINE_integer("save_freq", default = 1000, help = 'save frequency')
+  flags.DEFINE_string('save_path', default = 'checkpoints', help = 'checkpoint path')
   flags.DEFINE_integer('stack_length', default = 4, help = 'length of the stack')
 
 def main(unused_argv):
@@ -25,7 +28,14 @@ def main(unused_argv):
   }[FLAGS.game]
   env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
   model = PPO(CustomActorCriticPolicy, env, verbose = 1)
-  model.learn(FLAGS.steps)
+  checkpoint_callback = CheckpointCallback(
+    save_freq = FLAGS.save_freq,
+    save_path = FLAGS.save_path,
+    name_prefix = f"ppo_{FLAGS.game}",
+    save_replay_buffer = True,
+    save_vecnormalize = True,
+  )
+  model.learn(total_timesteps = FLAGS.steps, callback = checkpoint_callback)
   model.save(FLAGS.ckpt)
   #torch.save(model.policy.state_dict(), FLAGS.ckpt)
 
