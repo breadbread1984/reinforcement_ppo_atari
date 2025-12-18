@@ -7,18 +7,21 @@ from gymnasium.wrappers import GrayscaleObservation
 from gymnasium.wrappers import FrameStackObservation
 import ale_py
 import torch
+from stable_baselines3.common.env_util import make_atari_env
+from stable_baselines3.common.vec_env import VecFrameStack
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
-from models_sb3 import CustomActorCriticPolicy
+from models_sb3 import CustomCNN, CustomActorCriticPolicy
 
 FLAGS = flags.FLAGS
 
 def add_options():
+  flags.DEFINE_integer('batch', default = 512, help = 'number of trajectories collected parallely')
   flags.DEFINE_string('save_ckpt', default = 'ckpt.zip', help = 'path to output checkpoint')
   flags.DEFINE_string('load_ckpt', default = None, help = 'path to checkpoint resumed')
   flags.DEFINE_enum('game', default = 'box', enum_values = {'box'}, help = 'game to train with')
   flags.DEFINE_integer("steps", default = 1000000, help = 'steps for training')
-  flags.DEFINE_integer("save_freq", default = 1000, help = 'save frequency')
+  flags.DEFINE_integer("save_freq", default = 10000, help = 'save frequency')
   flags.DEFINE_string('save_path', default = 'checkpoints', help = 'checkpoint path')
   flags.DEFINE_integer('stack_length', default = 4, help = 'length of the stack')
 
@@ -27,9 +30,18 @@ def main(unused_argv):
   env_id = {
     'box': 'ALE/Boxing-v5'
   }[FLAGS.game]
-  env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
+  #env = FrameStackObservation(GrayscaleObservation(gym.make(env_id)), FLAGS.stack_length)
+  env = VecFrameStack(make_atari_env(env_id, n_envs = FLAGS.batch, seed = 0), n_stack = FLAGS.stack_length)
   if FLAGS.load_ckpt is None:
-    model = PPO(CustomActorCriticPolicy, env, verbose = 1)
+    model = PPO(
+      CustomActorCriticPolicy,
+      env,
+      policy_kwargs = {
+        "features_extractor_class": CustomCNN,
+        "features_extractor_kwargs": {"features_dim": 128}
+      },
+      verbose = 1
+    )
   else:
     model = PPO.load(FLAGS.load_ckpt)
     model.set_env(env)
